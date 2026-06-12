@@ -30,7 +30,7 @@ public class UsuarioService {
         usuario.setNombre(usuarioDTO.getNombre());
         usuario.setApellido(usuarioDTO.getApellido());
         usuario.setContrasena(usuarioDTO.getContrasena()); // En producción, hashear la contraseña
-        usuario.setActivo(true);
+        usuario.setActivo(usuarioDTO.getActivo() != null ? usuarioDTO.getActivo() : true);
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
         return convertirADTO(usuarioGuardado);

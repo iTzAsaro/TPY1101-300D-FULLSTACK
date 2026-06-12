@@ -12,8 +12,8 @@ export function UsuarioForm({ isEditMode = false }) {
     nombre: '',
     apellido: '',
     email: '',
-    password: '',
-    estado: 'Activo'
+    contrasena: '',
+    activo: true
   });
   
   const [loading, setLoading] = useState(isEditMode);
@@ -32,8 +32,12 @@ export function UsuarioForm({ isEditMode = false }) {
     setLoading(true);
     try {
       const response = await api.get(`/usuarios/${id}`);
-      const { password, ...dataWithoutPassword } = response.data;
-      setFormData(prev => ({ ...prev, ...dataWithoutPassword }));
+      const { contrasena, ...dataWithoutPassword } = response.data;
+      setFormData(prev => ({ 
+        ...prev, 
+        ...dataWithoutPassword,
+        contrasena: ''
+      }));
     } catch (err) {
       setActionMessage({
         type: 'error',
@@ -62,10 +66,10 @@ export function UsuarioForm({ isEditMode = false }) {
       newErrors.email = 'Email inválido';
     }
     
-    if (!isEditMode && !formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener mínimo 6 caracteres';
+    if (!isEditMode && !formData.contrasena) {
+      newErrors.contrasena = 'La contraseña es requerida';
+    } else if (formData.contrasena && formData.contrasena.length < 6) {
+      newErrors.contrasena = 'La contraseña debe tener mínimo 6 caracteres';
     }
     
     setErrors(newErrors);
@@ -81,8 +85,8 @@ export function UsuarioForm({ isEditMode = false }) {
     try {
       const dataToSend = { ...formData };
       // No enviar contraseña vacía en modo edición
-      if (isEditMode && !dataToSend.password) {
-        delete dataToSend.password;
+      if (isEditMode && !dataToSend.contrasena) {
+        delete dataToSend.contrasena;
       }
 
       if (isEditMode) {
@@ -103,21 +107,27 @@ export function UsuarioForm({ isEditMode = false }) {
         navigate('/dashboard');
       }, 1500);
     } catch (err) {
+      console.error('Error completo:', err);
+      console.error('Response data:', err.response?.data);
+      const errorMsg = 
+        err.response?.data?.error || 
+        err.response?.data?.message ||
+        Object.values(err.response?.data || {}).join(', ') ||
+        'Error al guardar el usuario.';
       setActionMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Error al guardar el usuario.'
+        text: errorMsg
       });
-      console.error(err);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     // Limpiar error del campo
     if (errors[name]) {
@@ -240,17 +250,17 @@ export function UsuarioForm({ isEditMode = false }) {
                 </label>
                 <input
                   type="password"
-                  name="password"
-                  value={formData.password}
+                  name="contrasena"
+                  value={formData.contrasena}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2.5 border ${
-                    errors.password ? 'border-rose-500' : 'border-gray-300'
+                    errors.contrasena ? 'border-rose-500' : 'border-gray-300'
                   } rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 hover:bg-white transition disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   placeholder="••••••••"
                   disabled={submitting}
                 />
-                {errors.password && (
-                  <p className="text-xs text-rose-600 mt-1 font-medium">{errors.password}</p>
+                {errors.contrasena && (
+                  <p className="text-xs text-rose-600 mt-1 font-medium">{errors.contrasena}</p>
                 )}
               </div>
 
@@ -258,16 +268,20 @@ export function UsuarioForm({ isEditMode = false }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Estado
                 </label>
-                <select
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 hover:bg-white transition disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  disabled={submitting}
-                >
-                  <option value="Activo">Activo</option>
-                  <option value="Inactivo">Inactivo</option>
-                </select>
+                <div className="flex items-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 hover:bg-white transition">
+                  <input
+                    type="checkbox"
+                    id="activo"
+                    name="activo"
+                    checked={formData.activo}
+                    onChange={handleInputChange}
+                    disabled={submitting}
+                    className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                  <label htmlFor="activo" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Activo
+                  </label>
+                </div>
               </div>
             </div>
 
